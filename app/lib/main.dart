@@ -33,8 +33,6 @@ class MyHomePage extends StatefulWidget {
 
 class _MyHomePageState extends State<MyHomePage> {
   late WebSocketChannel channel;
-  // int? counter;
-  // Map? map;
 
 // String socketUrl = 'wss://myservernew-rz235lxkgq-uc.a.run.app/ws';
   String socketUrl = 'ws://localhost:8080/sql';
@@ -45,10 +43,7 @@ class _MyHomePageState extends State<MyHomePage> {
     super.initState();
     print(socketUrl);
     channel = WebSocketChannel.connect(Uri.parse(socketUrl));
-
-    channel.stream.listen((data) {
-      print(data);
-    });
+    _buildUserStream();
   }
 
   @override
@@ -57,13 +52,18 @@ class _MyHomePageState extends State<MyHomePage> {
     super.dispose();
   }
 
+  _buildUserStream() {
+    channel.stream.listen((data) {
+      print(data);
+      for (var name in data) {
+        print(name);
+      }
+    });
+  }
+
   _sendIncrementComand(name) async {
     Map<String, dynamic> data = {'name': name, 'action': 'addUser'};
     channel.sink.add(jsonEncode(data));
-  }
-
-  _printMap() {
-    // print(map);
   }
 
   @override
@@ -79,10 +79,25 @@ class _MyHomePageState extends State<MyHomePage> {
             Text(
               socketUrl,
             ),
-            Text(
-              '?',
-              style: Theme.of(context).textTheme.headline4,
-            ),
+            // StreamBuilder(
+            //     stream: json,
+            //     builder: (context, snapshot) {
+            //       return
+            // ListView.builder(
+            //     itemCount: jsonData == null ? 0 : jsonData!.length,
+            //     scrollDirection: Axis.vertical,
+            //     shrinkWrap: true,
+            //     itemBuilder: (context, index) {
+            //       return ListTile(
+            //           title: Text(jsonData == null
+            //               ? 'something coming '
+            //               : jsonData!['name']));
+            //     }),
+            // }),
+            // Text(
+            //   '?',
+            //   style: Theme.of(context).textTheme.headline4,
+            // ),
             TextField(
               controller: nameController,
               decoration: const InputDecoration(
@@ -95,7 +110,6 @@ class _MyHomePageState extends State<MyHomePage> {
       floatingActionButton: FloatingActionButton(
         onPressed: () {
           _sendIncrementComand(nameController.text);
-          _printMap();
         },
         tooltip: 'Increment',
         child: const Icon(Icons.add),

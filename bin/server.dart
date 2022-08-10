@@ -39,33 +39,39 @@ Response _echoHandler(Request request) {
 
 void _sqlHandler(WebSocketChannel webSocket) {
   _client.add(webSocket);
-  webSocket.stream.listen((dynamic message) async {
-    stdout.writeln('Message received: $message');
-    print('this is the message: $message');
-    var data = jsonDecode(message);
-    print(data['name']);
-    if (message != null && data['action'] == 'addUser') {
-      //TODO: add user to database
-      var settings = ConnectionSettings(
-          host: 'dart-dataserver-test.cr5cn3uj0ni0.us-east-1.rds.amazonaws.com',
-          port: 3306,
-          user: 'admin',
-          password: '12345678',
-          db: 'flutterdb');
-      var connection = await MySqlConnection.connect(settings);
-      print('connected');
-      var result = await connection
-          .query('insert into users (name) values (?)', [data['name']]);
-      var results = await connection.query('select * from users');
-      for (var row in results) {
-        var map = {'id': row[0], 'name': row[1]};
-        print(map['name']);
-        for (var client in _client) {
-          client.sink.add(json.encode(map));
+  webSocket.stream.listen(
+    (dynamic message) async {
+      stdout.writeln('Message received: $message');
+      print('this is the message: $message');
+      var data = jsonDecode(message);
+      print(data['name']);
+      if (message != null && data['action'] == 'addUser') {
+        //TODO: add user to database
+        var settings = ConnectionSettings(
+            host:
+                'dart-dataserver-test.cr5cn3uj0ni0.us-east-1.rds.amazonaws.com',
+            port: 3306,
+            user: 'admin',
+            password: '12345678',
+            db: 'flutterdb');
+        var connection = await MySqlConnection.connect(settings);
+        print('connected');
+        var result = await connection
+            .query('insert into users (name) values (?)', [data['name']]);
+        var results = await connection.query('select * from users');
+        for (var row in results) {
+          var map = {'id': row[0], 'name': row[1]};
+          print(map['name']);
+          for (var client in _client) {
+            client.sink.add(json.encode(map));
+          }
         }
       }
-    }
-  });
+    },
+    onDone: () {
+      _client.remove(webSocket);
+    },
+  );
 }
 
 void _handler(WebSocketChannel webSocket) {
