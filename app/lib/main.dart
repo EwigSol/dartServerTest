@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:dartservertest/userModel.dart';
 import 'package:flutter/material.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 
@@ -37,6 +38,9 @@ class _MyHomePageState extends State<MyHomePage> {
 // String socketUrl = 'wss://myservernew-rz235lxkgq-uc.a.run.app/ws';
   String socketUrl = 'ws://localhost:8080/sql';
   TextEditingController nameController = TextEditingController();
+  User user = User();
+  List jsonData = [];
+  List<User> listOfUsers = [];
 
   @override
   void initState() {
@@ -54,10 +58,21 @@ class _MyHomePageState extends State<MyHomePage> {
 
   _buildUserStream() {
     channel.stream.listen((data) {
-      print(data);
-      for (var name in data) {
-        print(name);
-      }
+      // print(data);
+      setState(() {
+        jsonData = json.decode(data);
+      });
+      // print('data after converting to list: $jsonData');
+      // for (var i = 0; i < jsonData.length; i++) {
+      //   print(jsonData[i]['name']);
+      // }
+      // setState(() {
+      //   listOfUsers = [user];
+      // });
+
+      // print(listOfUsers);
+      // final user = User.fromJson(data as dynamic);
+      // print(user.name);
     });
   }
 
@@ -65,6 +80,11 @@ class _MyHomePageState extends State<MyHomePage> {
     Map<String, dynamic> data = {'name': name, 'action': 'addUser'};
     channel.sink.add(jsonEncode(data));
   }
+
+  // _getUserFromServer() async {
+  //   Map<String, dynamic> data = {'action': 'getUser'};
+  //   channel.sink.add(jsonEncode(data));
+  // }
 
   @override
   Widget build(BuildContext context) {
@@ -83,16 +103,20 @@ class _MyHomePageState extends State<MyHomePage> {
             //     stream: json,
             //     builder: (context, snapshot) {
             //       return
-            // ListView.builder(
-            //     itemCount: jsonData == null ? 0 : jsonData!.length,
-            //     scrollDirection: Axis.vertical,
-            //     shrinkWrap: true,
-            //     itemBuilder: (context, index) {
-            //       return ListTile(
-            //           title: Text(jsonData == null
-            //               ? 'something coming '
-            //               : jsonData!['name']));
-            //     }),
+            SizedBox(
+              height: 400,
+              width: 400,
+              child: ListView.builder(
+                  itemCount: jsonData == null ? 0 : jsonData.length,
+                  scrollDirection: Axis.vertical,
+                  shrinkWrap: true,
+                  itemBuilder: (context, index) {
+                    return ListTile(
+                        title: Text(jsonData == null
+                            ? 'something coming '
+                            : jsonData[index]['name']));
+                  }),
+            ),
             // }),
             // Text(
             //   '?',
@@ -107,13 +131,24 @@ class _MyHomePageState extends State<MyHomePage> {
           ],
         ),
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          _sendIncrementComand(nameController.text);
-        },
-        tooltip: 'Increment',
-        child: const Icon(Icons.add),
-      ),
+      floatingActionButton:
+          Row(mainAxisAlignment: MainAxisAlignment.end, children: [
+        FloatingActionButton(
+          onPressed: () {
+            _sendIncrementComand(nameController.text);
+          },
+          tooltip: 'Increment',
+          child: const Icon(Icons.add),
+        ),
+        // const SizedBox(width: 10),
+        // FloatingActionButton(
+        //   onPressed: () {
+        //     _getUserFromServer();
+        //   },
+        //   tooltip: 'Get Users',
+        //   child: const Icon(Icons.add),
+        // ),
+      ]),
     );
   }
 }
