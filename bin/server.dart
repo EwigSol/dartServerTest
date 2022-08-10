@@ -56,15 +56,14 @@ void _sqlHandler(WebSocketChannel webSocket) {
       print('connected');
       var result = await connection
           .query('insert into users (name) values (?)', [data['name']]);
-      print(result);
-      var results = await connection.query('select * users where ?'[1]);
-      // result.forEach((element) { Map<String, dynamic> map = element.fields});
+      var results = await connection.query('select * from users');
       for (var row in results) {
-        print('id: ${row[0]}, name: ${row[1]}');
+        var map = {'id': row[0], 'name': row[1]};
+        print(map['name']);
+        for (var client in _client) {
+          client.sink.add(json.encode(map));
+        }
       }
-    }
-    for (var client in _client) {
-      client.sink.add(message);
     }
   });
 }
@@ -72,8 +71,7 @@ void _sqlHandler(WebSocketChannel webSocket) {
 void _handler(WebSocketChannel webSocket) {
   _client.add(webSocket);
   //setting value in redis
-  command.send_object(
-      ['GET', 'counter', 'Get', 'SurName', 'Get', 'mySurNmae']).then((value) {
+  command.send_object(['GET', 'counter']).then((value) {
     webSocket.sink.add(value.toString());
   });
   //Checking for connection
@@ -83,8 +81,7 @@ void _handler(WebSocketChannel webSocket) {
     stdout.writeln('Received message: $message');
     //checking the message from client
     if (message == 'increment') {
-      final newVal = await command.send_object(
-          ['INCR', 'counter', 'Name', 'myName', 'SurName', 'mySurName']);
+      final newVal = await command.send_object(['INCR', 'counter']);
       //Incrementing value to our local variable
       command.send_object(["Publish", "counterUpdate", "counter"]);
       // _counterValue++;

@@ -33,7 +33,8 @@ class MyHomePage extends StatefulWidget {
 
 class _MyHomePageState extends State<MyHomePage> {
   late WebSocketChannel channel;
-  int? counter;
+  // int? counter;
+  // Map? map;
 
 // String socketUrl = 'wss://myservernew-rz235lxkgq-uc.a.run.app/ws';
   String socketUrl = 'ws://localhost:8080/sql';
@@ -45,8 +46,9 @@ class _MyHomePageState extends State<MyHomePage> {
     print(socketUrl);
     channel = WebSocketChannel.connect(Uri.parse(socketUrl));
 
-    channel.stream
-        .listen((value) => setState(() => counter = int.parse(value)));
+    channel.stream.listen((data) {
+      print(data);
+    });
   }
 
   @override
@@ -56,20 +58,12 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   _sendIncrementComand(name) async {
-    // var settings = ConnectionSettings(
-    //     host: 'dart-dataserver-test.cr5cn3uj0ni0.us-east-1.rds.amazonaws.com',
-    //     port: 3306,
-    //     user: 'admin',
-    //     password: '12345678',
-    //     db: 'flutterdb');
-    // var connection = await MySqlConnection.connect(settings);
-    // print('connected');
-    // var result = await connection
-    //     .query('insert into users (name) values (?)', ['$name']);
-    // print(result);
-    // channel.sink.add('addUser');
     Map<String, dynamic> data = {'name': name, 'action': 'addUser'};
     channel.sink.add(jsonEncode(data));
+  }
+
+  _printMap() {
+    // print(map);
   }
 
   @override
@@ -86,7 +80,7 @@ class _MyHomePageState extends State<MyHomePage> {
               socketUrl,
             ),
             Text(
-              counter?.toString() ?? '?',
+              '?',
               style: Theme.of(context).textTheme.headline4,
             ),
             TextField(
@@ -101,6 +95,7 @@ class _MyHomePageState extends State<MyHomePage> {
       floatingActionButton: FloatingActionButton(
         onPressed: () {
           _sendIncrementComand(nameController.text);
+          _printMap();
         },
         tooltip: 'Increment',
         child: const Icon(Icons.add),
