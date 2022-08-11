@@ -1,16 +1,19 @@
 class User {
-  String? id;
   String? name;
+  String? id;
 
-  User({this.id, this.name});
+  User({
+    this.name,
+    this.id,
+  });
 
-  static User fromJson(json) => User(
-        id: json['id'].toString(),
-        name: json['name'].toString(),
+  factory User.fromJson(Map<String, dynamic> json) => User(
+        name: json["name"],
+        id: json["id"],
       );
 
-  static User fromList(jsonData) => User(
-        id: jsonData['id'].toString(),
-        name: jsonData['name'].toString(),
-      );
+  Map<String, dynamic> asMap() => {
+        'name': name,
+        'id': id,
+      };
 }

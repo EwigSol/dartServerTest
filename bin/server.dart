@@ -39,28 +39,37 @@ Response _echoHandler(Request request) {
   return Response.ok('$message\n');
 }
 
-void _sqlHandler(WebSocketChannel webSocket) {
+void _sqlHandler(WebSocketChannel webSocket) async {
   _client.add(webSocket);
+  var settings = ConnectionSettings(
+      host: 'dart-dataserver-test.cr5cn3uj0ni0.us-east-1.rds.amazonaws.com',
+      port: 3306,
+      user: 'admin',
+      password: '12345678',
+      db: 'flutterdb');
+  print('connected');
+  var connection = await MySqlConnection.connect(settings);
+  var results = await connection.query('select * from users');
+  var list = [];
+  for (var row in results) {
+    var map = {
+      'id': row[0].toString(),
+      'name': row[1].toString(),
+    };
+    list.add(map);
+    print(map['name']);
+  }
+  for (var client in _client) {
+    client.sink.add(json.encode(list));
+  }
   webSocket.stream.listen(
     (dynamic message) async {
       stdout.writeln('Message received: $message');
       print('this is the message: $message');
       var data = jsonDecode(message);
-      var settings = ConnectionSettings(
-          host: 'dart-dataserver-test.cr5cn3uj0ni0.us-east-1.rds.amazonaws.com',
-          port: 3306,
-          user: 'admin',
-          password: '12345678',
-          db: 'flutterdb');
-      var connection = await MySqlConnection.connect(settings);
-      print('connected');
       if (message != null && data['action'] == 'addUser') {
         var result = await connection
             .query('insert into users (name) values (?)', [data['name']]);
-      } else if (message != null && data['action'] == 'getUser') {
-        // var result = await connection.query('select * from users');
-        // print(result);
-        // webSocket.sink.add(jsonEncode(result));
         var results = await connection.query('select * from users');
         var list = [];
         for (var row in results) {
@@ -81,43 +90,6 @@ void _sqlHandler(WebSocketChannel webSocket) {
     },
   );
 }
-
-// void _getUser(WebSocketChannel webSocket) {
-//   _client.add(webSocket);
-//   webSocket.stream.listen(
-//     (dynamic message) async {
-//       stdout.writeln('Message received: $message');
-//       print('this is the message: $message');
-//       var data = jsonDecode(message);
-//       if (message != null && data['action'] == 'getUsers') {
-//         var settings = ConnectionSettings(
-//             host:
-//                 'dart-dataserver-test.cr5cn3uj0ni0.us-east-1.rds.amazonaws.com',
-//             port: 3306,
-//             user: 'admin',
-//             password: '12345678',
-//             db: 'flutterdb');
-//         var connection = await MySqlConnection.connect(settings);
-//         var results = await connection.query('select * from users');
-//         var list = [];
-//         for (var row in results) {
-//           var map = {
-//             'id': row[0].toString(),
-//             'name': row[1].toString(),
-//           };
-//           list.add(map);
-//           print(map['name']);
-//         }
-//         for (var client in _client) {
-//           client.sink.add(json.encode(list));
-//         }
-//       }
-//     },
-//     onDone: () {
-//       _client.remove(webSocket);
-//     },
-//   );
-// }
 
 void _handler(WebSocketChannel webSocket) {
   _client.add(webSocket);

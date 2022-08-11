@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:dartservertest/userModel.dart';
@@ -38,6 +39,7 @@ class _MyHomePageState extends State<MyHomePage> {
 // String socketUrl = 'wss://myservernew-rz235lxkgq-uc.a.run.app/ws';
   String socketUrl = 'ws://localhost:8080/sql';
   TextEditingController nameController = TextEditingController();
+  var myStreamController = StreamController<bool>.broadcast();
   User user = User();
   List jsonData = [];
   List<User> listOfUsers = [];
@@ -58,21 +60,10 @@ class _MyHomePageState extends State<MyHomePage> {
 
   _buildUserStream() {
     channel.stream.listen((data) {
-      // print(data);
       setState(() {
         jsonData = json.decode(data);
+        listOfUsers = jsonData.map((i) => User.fromJson(i)).toList();
       });
-      // print('data after converting to list: $jsonData');
-      // for (var i = 0; i < jsonData.length; i++) {
-      //   print(jsonData[i]['name']);
-      // }
-      // setState(() {
-      //   listOfUsers = [user];
-      // });
-
-      // print(listOfUsers);
-      // final user = User.fromJson(data as dynamic);
-      // print(user.name);
     });
   }
 
@@ -80,11 +71,6 @@ class _MyHomePageState extends State<MyHomePage> {
     Map<String, dynamic> data = {'name': name, 'action': 'addUser'};
     channel.sink.add(jsonEncode(data));
   }
-
-  // _getUserFromServer() async {
-  //   Map<String, dynamic> data = {'action': 'getUser'};
-  //   channel.sink.add(jsonEncode(data));
-  // }
 
   @override
   Widget build(BuildContext context) {
@@ -99,29 +85,28 @@ class _MyHomePageState extends State<MyHomePage> {
             Text(
               socketUrl,
             ),
-            // StreamBuilder(
-            //     stream: json,
-            //     builder: (context, snapshot) {
-            //       return
+            StreamBuilder(
+                builder: ((context, snapshot) {
+                  return Text(
+                    '${listOfUsers.length}',
+                    style: Theme.of(context).textTheme.headline4,
+                  );
+                }),
+                stream: myStreamController.stream),
             SizedBox(
               height: 400,
               width: 400,
               child: ListView.builder(
-                  itemCount: jsonData == null ? 0 : jsonData.length,
+                  itemCount: listOfUsers == null ? 0 : listOfUsers.length,
                   scrollDirection: Axis.vertical,
                   shrinkWrap: true,
                   itemBuilder: (context, index) {
                     return ListTile(
-                        title: Text(jsonData == null
+                        title: Text(listOfUsers == null
                             ? 'something coming '
-                            : jsonData[index]['name']));
+                            : listOfUsers[index].name!));
                   }),
             ),
-            // }),
-            // Text(
-            //   '?',
-            //   style: Theme.of(context).textTheme.headline4,
-            // ),
             TextField(
               controller: nameController,
               decoration: const InputDecoration(
@@ -140,14 +125,6 @@ class _MyHomePageState extends State<MyHomePage> {
           tooltip: 'Increment',
           child: const Icon(Icons.add),
         ),
-        // const SizedBox(width: 10),
-        // FloatingActionButton(
-        //   onPressed: () {
-        //     _getUserFromServer();
-        //   },
-        //   tooltip: 'Get Users',
-        //   child: const Icon(Icons.add),
-        // ),
       ]),
     );
   }
